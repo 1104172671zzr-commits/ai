@@ -5,6 +5,7 @@ AI Commerce Pro - 欧洲跨境电商 TikTok 自动化流水线
 """
 
 import os
+import shutil
 import re
 import uuid
 import logging
@@ -18,6 +19,19 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# 自动安装 ffmpeg
+def ensure_ffmpeg():
+    if shutil.which("ffmpeg"):
+        return
+    try:
+        subprocess.run(["apt-get", "update", "-qq"], check=True, capture_output=True)
+        subprocess.run(["apt-get", "install", "-y", "-qq", "ffmpeg"], check=True, capture_output=True)
+        print("ffmpeg installed")
+    except Exception as e:
+        print(f"ffmpeg install failed: {e}")
+
+ensure_ffmpeg()
 
 # =========================
 # 初始化
