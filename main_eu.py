@@ -252,7 +252,7 @@ def generate_script(product: Product, config: PipelineConfig) -> str:
                 "X-Title": "AI Commerce Pro"
             },
             json={
-                "model": "google/gemma-3-27b-it:free",
+                "model": "deepseek/deepseek-v4-flash",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
                 "max_tokens": 800,
