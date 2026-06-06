@@ -210,9 +210,9 @@ VIDEO_STYLE_PROMPTS = {
 }
 
 def generate_script(product: Product, config: PipelineConfig) -> str:
-    api_key = os.getenv("DEEPSEEK_API_KEY")
+    api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        raise ValueError("DEEPSEEK_API_KEY 未设置")
+        raise ValueError("OPENROUTER_API_KEY 未设置")
 
     market = config.target_market
     lang = MARKET_LANG[market]
@@ -244,10 +244,15 @@ def generate_script(product: Product, config: PipelineConfig) -> str:
 
     try:
         res = requests.post(
-            "https://api.deepseek.com/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://ai-commerce-pro.app",
+                "X-Title": "AI Commerce Pro"
+            },
             json={
-                "model": "deepseek-chat",
+                "model": "meta-llama/llama-3.3-70b-instruct:free",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
                 "max_tokens": 800,
@@ -260,9 +265,9 @@ def generate_script(product: Product, config: PipelineConfig) -> str:
         return content
 
     except requests.Timeout:
-        raise RuntimeError(f"DeepSeek API 超时: {product.title}")
+        raise RuntimeError(f"OpenRouter API 超时: {product.title}")
     except requests.HTTPError as e:
-        raise RuntimeError(f"DeepSeek API 错误 {e.response.status_code}: {e.response.text[:200]}")
+        raise RuntimeError(f"OpenRouter API 错误 {e.response.status_code}: {e.response.text[:200]}")
     except (KeyError, IndexError) as e:
         raise RuntimeError(f"响应解析失败: {e}")
 
