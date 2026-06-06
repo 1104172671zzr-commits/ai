@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Commerce Pro — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2e;
+    --accent: #00ff88;
+    --accent2: #ff6b35;
+    --accent3: #7b61ff;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --success: #00ff88;
+    --fail: #ff4757;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+
+  .logo span { color: var(--muted); }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(0,255,136,0); }
+  }
+
+  .live-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 48px 0 32px;
+    text-align: center;
+  }
+
+  .hero h1 {
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 .highlight {
+    color: var(--accent);
+    position: relative;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 15px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Market selector */
+  .market-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 28px 0;
+    flex-wrap: wrap;
+  }
+
+  .market-btn {
+    padding: 8px 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .market-btn:hover, .market-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,255,136,0.08);
+  }
+
+  /* Run button */
+  .run-btn {
+    display: block;
+    margin: 0 auto 40px;
+    padding: 14px 40px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .run-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,255,136,0.3); }
+  .run-btn:active { transform: translateY(0); }
+  .run-btn.loading { opacity: 0.7; pointer-events: none; }
+
+  /* Stats row */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--accent3); }
+
+  .stat-num {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    display: block;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Product cards */
+  .products-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: start;
+    transition: all 0.2s;
+    animation: fadeIn 0.4s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .product-card:hover { border-color: var(--accent3); transform: translateX(4px); }
+  .product-card.success { border-left: 3px solid var(--success); }
+  .product-card.failed { border-left: 3px solid var(--fail); }
+
+  .product-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .product-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 1px;
+  }
+
+  .tag-market { background: rgba(123,97,255,0.15); color: var(--accent3); border: 1px solid rgba(123,97,255,0.3); }
+  .tag-category { background: rgba(255,107,53,0.12); color: var(--accent2); border: 1px solid rgba(255,107,53,0.25); }
+  .tag-style { background: rgba(0,255,136,0.08); color: var(--accent); border: 1px solid rgba(0,255,136,0.2); }
+
+  .script-preview {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+    border-left: 2px solid var(--border);
+    padding-left: 12px;
+    margin-top: 8px;
+    max-height: 60px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .script-preview::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 20px;
+    background: linear-gradient(transparent, var(--surface));
+  }
+
+  .profit-badge {
+    text-align: right;
+  }
+
+  .profit-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+
+  .profit-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .status-badge {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  .status-badge.success { background: rgba(0,255,136,0.12); color: var(--success); border: 1px solid rgba(0,255,136,0.25); }
+  .status-badge.failed { background: rgba(255,71,87,0.12); color: var(--fail); border: 1px solid rgba(255,71,87,0.25); }
+
+  /* Log panel */
+  .log-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 40px;
+    max-height: 180px;
+    overflow-y: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+  }
+
+  .log-entry { color: var(--muted); }
+  .log-entry.info { color: var(--accent); }
+  .log-entry.error { color: var(--fail); }
+
+  /* Loading spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,255,136,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AI<span>/</span>COMMERCE <span>PRO</span></div>
+  <div class="live-badge"><span class="status-dot"></span>LIVE</div>
+</header>
+
+<div class="container">
+  <div class="hero">
+    <h1>欧洲跨境<br><span class="highlight">自动化选品</span></h1>
+    <p>// UK · DE · FR · IT · ES 五大市场实时数据</p>
+  </div>
+
+  <!-- Market selector -->
+  <div class="market-bar">
+    <button class="market-btn active" onclick="setMarket('UK',this)">🇬🇧 UK</button>
+    <button class="market-btn" onclick="setMarket('DE',this)">🇩🇪 DE</button>
+    <button class="market-btn" onclick="setMarket('FR',this)">🇫🇷 FR</button>
+    <button class="market-btn" onclick="setMarket('IT',this)">🇮🇹 IT</button>
+    <button class="market-btn" onclick="setMarket('ES',this)">🇪🇸 ES</button>
+  </div>
+
+  <!-- Run button -->
+  <button class="run-btn" id="runBtn" onclick="runPipeline()">
+    ▶ 启动流水线
+  </button>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <span class="stat-num" id="statTotal">—</span>
+      <div class="stat-label">选中商品</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="statSuccess">—</span>
+      <div class="stat-label">生成成功</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="statMargin">—</span>
+      <div class="stat-label">平均利润率</div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="section-title">运行日志</div>
+  <div class="log-panel" id="logPanel">
+    <div class="log-entry">// 点击「启动流水线」开始运行...</div>
+  </div>
+
+  <!-- Results -->
+  <div class="section-title">选品结果</div>
+  <div class="products-grid" id="productsGrid">
+    <div class="empty">
+      <div class="empty-icon">📦</div>
+      暂无数据<br>点击上方按钮启动选品流水线
+    </div>
+  </div>
+</div>
+
+<footer>AI Commerce Pro v2.0 — 数据每次运行实时更新</footer>
+
+<script>
+  // ⚠️ 改成你的 Railway 域名
+  const API = 'https://web-production-a9e57.up.railway.app';
+  let currentMarket = 'UK';
+
+  function setMarket(market, btn) {
+    currentMarket = market;
+    document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    addLog(`市场切换: ${market}`, 'info');
+  }
+
+  function addLog(msg, type = '') {
+    const panel = document.getElementById('logPanel');
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    const time = new Date().toLocaleTimeString('zh-CN');
+    entry.textContent = `[${time}] ${msg}`;
+    panel.appendChild(entry);
+    panel.scrollTop = panel.scrollHeight;
+  }
+
+  async function runPipeline() {
+    const btn = document.getElementById('runBtn');
+    btn.innerHTML = '<span class="spinner"></span>运行中...';
+    btn.classList.add('loading');
+
+    addLog(`启动流水线 — 市场: ${currentMarket}`, 'info');
+
+    try {
+      // 触发流水线
+      const res = await fetch(`${API}/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          target_market: currentMarket,
+          min_profit_margin: 0.6,
+          min_trend_score: 0.85,
+          max_products: 3
+        })
+      });
+      const data = await res.json();
+      const taskId = data.task_id;
+      addLog(`任务已提交: ${taskId}`);
+
+      // 轮询状态
+      await pollStatus(taskId);
+
+    } catch(e) {
+      addLog(`错误: ${e.message}`, 'error');
+      btn.innerHTML = '▶ 启动流水线';
+      btn.classList.remove('loading');
+    }
+  }
+
+  async function pollStatus(taskId) {
+    const btn = document.getElementById('runBtn');
+    let attempts = 0;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`${API}/status/${taskId}`);
+        const data = await res.json();
+
+        if (data.status === 'running' || data.status === 'pending') {
+          attempts++;
+          addLog(`等待结果... (${attempts * 3}s)`);
+          setTimeout(poll, 3000);
+        } else if (data.status === 'done') {
+          addLog(`✅ 完成！共 ${data.results.length} 个商品`, 'info');
+          renderResults(data.results);
+          btn.innerHTML = '▶ 重新运行';
+          btn.classList.remove('loading');
+        } else {
+          addLog(`失败: ${data.error}`, 'error');
+          btn.innerHTML = '▶ 重试';
+          btn.classList.remove('loading');
+        }
+      } catch(e) {
+        addLog(`轮询错误: ${e.message}`, 'error');
+        setTimeout(poll, 5000);
+      }
+    };
+    poll();
+  }
+
+  function renderResults(results) {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+
+    const success = results.filter(r => r.status === 'success');
+    const avgMargin = success.length
+      ? Math.round(success.reduce((s, r) => s + (r.profit_margin || 0), 0) / success.length * 100)
+      : 0;
+
+    document.getElementById('statTotal').textContent = results.length;
+    document.getElementById('statSuccess').textContent = success.length;
+    document.getElementById('statMargin').textContent = avgMargin + '%';
+
+    results.forEach((r, i) => {
+      const card = document.createElement('div');
+      card.className = `product-card ${r.status}`;
+      card.style.animationDelay = `${i * 0.1}s`;
+
+      const margin = r.profit_margin ? Math.round(r.profit_margin * 100) : '—';
+      const script = r.script_preview
+        ? r.script_preview.replace(/[^\x00-\x7F]/g, '').substring(0, 200)
+        : (r.error || '无数据');
+
+      card.innerHTML = `
+        <div>
+          <div class="product-name">${r.product}</div>
+          <div class="product-meta">
+            <span class="tag tag-market">${r.market || currentMarket}</span>
+            <span class="tag tag-category">${r.category || ''}</span>
+            <span class="tag tag-style">${r.video_style || ''}</span>
+          </div>
+          <div class="script-preview">${script}</div>
+          <span class="status-badge ${r.status}">${r.status === 'success' ? '✓ 成功' : '✗ 失败'}</span>
+        </div>
+        <div class="profit-badge">
+          <span class="profit-num">${margin}%</span>
+          <div class="profit-label">利润率</div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // 加载商品库数据
+  async function loadProductStats() {
+    try {
+      const res = await fetch(`${API}/markets`);
+      const data = await res.json();
+      const uk = data['UK'];
+      if (uk) {
+        document.getElementById('statTotal').textContent = uk.product_count;
+        addLog(`商品库加载: UK市场 ${uk.product_count} 个商品`, 'info');
+      }
+    } catch(e) {}
+  }
+
+  loadProductStats();
+</script>
+</body>
+</html>
