@@ -334,55 +334,33 @@ def create_video(script: str, product: Product, market: str) -> str:
     """生成 TikTok 竖屏视频 1080x1920"""
     style_key = VideoStyle(product.style)
     bg_color = STYLE_COLORS.get(style_key, "0x1a1a2e")
-    font_color = FONT_COLOR_MAP.get(style_key, "white")
 
     safe_name = safe_filename(f"{product.title}_{market}")
     os.makedirs("output", exist_ok=True)
-
-    caption = extract_caption(script)
-    caption_file = f"output/{safe_name}_caption.txt"
-    with open(caption_file, "w", encoding="utf-8") as f:
-        # ffmpeg drawtext 特殊字符转义
-        f.write(caption.replace(":", "\\:").replace("'", "\\'").replace("[", "\\[").replace("]", "\\]"))
-
     output_file = f"output/{safe_name}.mp4"
 
-    font_path = "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"
-    font_opt = f":fontfile={font_path}" if os.path.exists(font_path) else ""
-
-    # 价格标签
     currency = MARKET_CURRENCY.get(Market(market), "£")
-    price_text = f"Only {currency}{product.price}"
-
-    vf = (
-        # 背景
-        f"color=c={bg_color}:s=1080x1920:d=15"
-        f",drawtext=text='{price_text}'"
-        f":fontsize=52:fontcolor=yellow:x=(w-text_w)/2:y=200"
-        f":shadowcolor=black:shadowx=3:shadowy=3{font_opt}"
-        f",drawtext=textfile='{caption_file}'"
-        f":fontsize=38:fontcolor={font_color}:x=60:y=500"
-        f":line_spacing=12:shadowcolor=black:shadowx=2:shadowy=2{font_opt}"
-        f",drawtext=text='TikTok Shop':fontsize=28"
-        f":fontcolor=white@0.5:x=60:y=1800{font_opt}"
-    )
+    price = str(product.price)
 
     cmd = [
         "ffmpeg", "-y",
-        "-f", "lavfi", "-i", vf,
+        "-f", "lavfi",
+        "-i", f"color=c={bg_color}:s=1080x1920:d=15",
+        "-vf", f"drawtext=text='Only {currency}{price}':fontsize=60:fontcolor=yellow:x=(w-text_w)/2:y=200",
         "-c:v", "libx264",
-        "-preset", "fast",
-        "-crf", "22",
+        "-preset", "ultrafast",
+        "-crf", "28",
         "-pix_fmt", "yuv420p",
+        "-t", "15",
         output_file
     ]
 
     try:
-        subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=True)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            raise RuntimeError(f"ffmpeg 失败:\n{result.stderr[-300:]}")
         logger.info(f"🎬 视频生成: {output_file}")
         return output_file
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"ffmpeg 失败:\n{e.stderr[-500:]}")
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"ffmpeg 超时: {product.title}")
 
