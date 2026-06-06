@@ -17,6 +17,7 @@ from enum import Enum
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -470,14 +471,11 @@ def run_pipeline(task_id: str, config: PipelineConfig):
 # =========================
 # 6. API 接口
 # =========================
-@app.get("/", summary="健康检查")
+@app.get("/", summary="Dashboard")
 def home():
-    return {
-        "status": "running",
-        "service": "AI Commerce Pro EU v2.0",
-        "markets": [m.value for m in Market],
-        "product_count": len(EUROPE_PRODUCT_CATALOG),
-    }
+    if os.path.exists("dashboard.html"):
+        return FileResponse("dashboard.html")
+    return {"status": "running", "service": "AI Commerce Pro EU v2.0"}
 
 
 @app.post("/run", summary="触发流水线（异步）")
