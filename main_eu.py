@@ -252,7 +252,7 @@ def generate_script(product: Product, config: PipelineConfig) -> str:
                 "X-Title": "AI Commerce Pro"
             },
             json={
-                "model": "meta-llama/llama-3.3-70b-instruct:free",
+                "model": "google/gemma-3-27b-it:free",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
                 "max_tokens": 800,
