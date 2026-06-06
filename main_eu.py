@@ -210,7 +210,7 @@ VIDEO_STYLE_PROMPTS = {
 }
 
 def generate_script(product: Product, config: PipelineConfig) -> str:
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
     if not api_key:
         raise ValueError("OPENROUTER_API_KEY 未设置")
 
